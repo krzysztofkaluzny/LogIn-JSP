@@ -1,0 +1,79 @@
+<project default="" xmlns:artifact="antlib:org.apache.maven.artifact.ant">
+
+	
+	<path id="maven-ant-tasks.classpath" path="lib/maven-ant-tasks-2.1.3.jar" />
+	<typedef resource="org/apache/maven/artifact/ant/antlib.xml"
+		uri="antlib:org.apache.maven.artifact.ant"
+		classpathref="maven-ant-tasks.classpath" />
+
+	<taskdef resource="net/sf/antcontrib/antcontrib.properties">
+		<classpath>
+			<pathelement location="lib/ant-contrib-1.0b3.jar"/>
+		</classpath>
+	</taskdef>
+
+	<taskdef name="xmltask" classname="com.oopsconsultancy.xmltask.ant.XmlTask"
+			 classpath="lib/xmltask.jar"/>
+
+
+	<taskdef name="http" classname="org.missinglink.ant.task.http.HttpClientTask">
+		<classpath>
+			<pathelement location="lib/ml-ant-http-1.1.3.jar"/>
+		</classpath>
+	</taskdef>
+
+
+	<macrodef name="CheckRemoteAvailability">
+		<attribute name="pageToTest" default="http://localhost:${http.port}" />
+		<attribute name="waitMax" default="15" />
+		<attribute name="waitUnit" default="second" />
+		<attribute name="checkInterval" default="2000" />
+		<attribute name="errorsStart" default="400" />
+
+		<sequential>
+			<!-- wait some time -->
+			<echo level="info" message="Wait until fresh deployed project is available at @{pageToTest}!" />
+			<waitfor maxwait="@{waitMax}" maxwaitunit="@{waitUnit}" checkevery="@{checkInterval}" timeoutproperty="timeout_fresh_deployed_platform">
+				<http url="@{pageToTest}" errorsbeginat="@{errorsStart}" />
+			</waitfor>
+
+			<if>
+				<isset property="timeout_fresh_deployed_platform" />
+				<then>
+					<fail message="[FAILURE] Remote application is not available!" />
+				</then>
+				<else>
+					<echo message="[SUCCESS] Remote application is available!" />
+				</else>
+			</if>
+		</sequential>
+	</macrodef>
+
+
+	<macrodef name="downloadArtifact">
+		<attribute name="pathId" default=""/>
+		<attribute name="filesetId" default=""/>
+
+		<attribute name="groupid" default="${artifact.groupid}"/>
+		<attribute name="artifactid" default="${artifact.artifactid}"/>
+		<attribute name="version" default="${artifact.version}"/>
+		<attribute name="type" default="${artifact.type}"/>
+		<attribute name="classifier" default="${artifact.classifier}"/>
+
+		<attribute name="repository.id" default="${artifact.repository.id}"/>
+		<attribute name="repository.url" default="${artifact.repository.url}"/>
+		<attribute name="repository.username" default="${artifact.repository.username}"/>
+		<attribute name="repository.password" default="${artifact.repository.password}"/>
+
+		<sequential>
+			<artifact:dependencies pathId="@{pathId}" filesetId="@{filesetId}">
+				<dependency groupId="@{groupid}" artifactId="@{artifactid}" version="@{version}" type="@{type}" classifier="@{classifier}"/>
+				<remoteRepository id="@{repository.id}" url="@{repository.url}">
+					<authentication username="@{repository.username}" password="@{repository.password}"/>
+					<snapshots updatePolicy="always"/>
+				</remoteRepository>
+			</artifact:dependencies>
+		</sequential>
+	</macrodef>
+	
+</project>

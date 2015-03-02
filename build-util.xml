@@ -1,0 +1,32 @@
+﻿<project name="ProjectUtil" default="usage" basedir="." xmlns:jacoco="antlib:org.jacoco.ant">
+	<description>
+	</description>
+
+	<property name="dist.dir"       location="${basedir}/dist" />
+
+	<target name="zip" description="Zip the entire project" >
+		<property name="packageName" value="workspace.zip"/>
+		<zip destfile="${dist.dir}/${packageName}"  basedir=".">
+			<exclude name="${dist.dir}/${packageName}"/>
+		</zip>
+	</target>
+
+	<target name="unzip" description="Unzip the entire project zip to ." > 
+		<property name="sourceFile" value="${dist.dir}/workspace.zip"/>
+		<property name="targetDir" value="."/>
+		<unzip src="${sourceFile}" dest="${targetDir}"/>
+	</target>
+
+	<target name="usage">
+        <echo message=""/>
+        <echo message="${name} build file"/>
+        <echo message="-----------------------------------"/>
+        <echo message=""/>
+        <echo message="Available targets are:"/>
+        <echo message=""/>
+		<echo message="zip         --> Zip the entire project"/>
+		<echo message="unzip       --> Unzip the entire project zip to ."/>
+        <echo message=""/>
+    </target>
+	
+</project>

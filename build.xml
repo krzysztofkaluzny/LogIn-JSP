@@ -1,0 +1,405 @@
+<project name="Web  Application" default="compile" basedir=".">
+
+    <property file="${user.home}/build.properties"/>
+    <property file="build.properties"/>
+    <property name="app.name" value="LogIn_deployed_with_plugin"/>
+	
+	<import file="common.xml" />
+
+    <path id="classpath">
+		<fileset dir="./lib">
+            <include name="*.jar"/>
+        </fileset>
+    </path>
+	
+	<path id="catalina-ant-classpath">
+		<fileset dir="./lib">
+            <include name="*.jar"/>
+        </fileset>
+    </path>
+	
+	
+	<taskdef name="deploy"    classname="org.apache.catalina.ant.DeployTask">
+		<classpath refid="catalina-ant-classpath"/>
+	</taskdef>
+    <taskdef name="install"   classname="org.apache.catalina.ant.DeployTask">
+		<classpath refid="catalina-ant-classpath"/>
+	</taskdef>
+    <taskdef name="list"      classname="org.apache.catalina.ant.ListTask">
+			<classpath refid="catalina-ant-classpath"/>
+	</taskdef>
+    <taskdef name="reload"    classname="org.apache.catalina.ant.ReloadTask">
+			<classpath refid="catalina-ant-classpath"/>
+	</taskdef>
+    <taskdef name="resources" classname="org.apache.catalina.ant.ResourcesTask">
+			<classpath refid="catalina-ant-classpath"/>
+	</taskdef>
+    <taskdef name="start"     classname="org.apache.catalina.ant.StartTask">
+			<classpath refid="catalina-ant-classpath"/>
+	</taskdef>
+    <taskdef name="stop"      classname="org.apache.catalina.ant.StopTask">
+			<classpath refid="catalina-ant-classpath"/>
+	</taskdef>
+    <taskdef name="undeploy"  classname="org.apache.catalina.ant.UndeployTask">
+			<classpath refid="catalina-ant-classpath"/>
+	</taskdef>
+
+	<property name="dist.dir"       location="${basedir}/dist" />
+
+	<target name="zip" description="Zip the entire project" >
+		<property name="packageName" value="workspace.zip"/>
+		<zip destfile="${dist.dir}/${packageName}"  basedir=".">
+			<exclude name="${dist.dir}/${packageName}"/>
+		</zip>
+	</target>
+
+	<target name="unzip" description="Unzip the entire project zip to ." > 
+		<property name="sourceFile" value="${dist.dir}/workspace.zip"/>
+		<property name="targetDir" value="."/>
+		<unzip src="${sourceFile}" dest="${targetDir}"/>
+	</target>
+
+    <target name="init">
+        <tstamp/>
+    </target>
+
+    <target name="clean" description="Deletes the Web Application's war directory and war file">
+        <echo message="Deleting ${app.name}'s war directory and war file ..."/>
+        <delete dir="${basedir}/war"/>
+        <delete dir="${basedir}/bin"/>
+        <delete dir="${basedir}/doc"/>
+        <delete dir="${basedir}/dist"/>
+	<delete dir="${basedir}/report"/>
+        <delete file="${basedir}/${app.name}.war"/>
+    </target>
+
+    <target name="prepare" description="Creates the Web Application's war directory" depends="clean">
+        <echo message="Creating ${app.name}'s war directory ..."/>
+        <mkdir dir="${basedir}/war"/>
+        <mkdir dir="${basedir}/war/WEB-INF"/>
+        <mkdir dir="${basedir}/war/WEB-INF/classes"/>
+        <mkdir dir="${basedir}/war/WEB-INF/lib"/>
+    </target>
+
+    <target name="compile" description="Builds the Web Application" depends="prepare">
+        <echo message="Building ${app.name} ..."/>
+        <javac srcdir="${basedir}/src" destdir="${basedir}/war/WEB-INF/classes">
+            <include name="**/*.java"/>
+            <classpath refid="classpath"/>
+        </javac>
+        <copy todir="${basedir}/war/WEB-INF">
+            <fileset dir="${basedir}/web/WEB-INF">
+                <include name="web.xml"/>
+            </fileset>
+        </copy>
+		<copy todir="${basedir}/war">
+            <fileset dir="${basedir}/web/WEB-INF">
+                <include name="globalCSS.css"/>
+            </fileset>
+        </copy>
+        <copy todir="${basedir}/war">
+            <fileset dir="${basedir}/web">
+                <include name="**/*.html"/>
+                <include name="**/*.jsp"/>
+                <include name="**/*.txt"/>
+                <include name="**/*.zip"/>
+                <include name="**/*.sit"/>
+                <include name="**/*.gif"/>
+                <include name="**/*.jpg"/>
+                <include name="**/*.png"/>
+            </fileset>
+        </copy>
+        <copy todir="${basedir}/war/META-INF">
+            <fileset dir=".">
+                <include name="context.xml" />
+            </fileset>
+        </copy>
+    </target>
+	
+	
+	<property name="src.dir"    location="${basedir}/src" />
+	<property name="doc.dir"    location="${basedir}/doc" />
+	<property name="tests.dir"    location="${basedir}/tests" />
+	<property name="bin.dir"    location="${basedir}/bin" />
+	<property name="temp.dir"    location="${basedir}/temp" />
+	<property name="lib.dir"    location="${basedir}/lib" />
+	<property name="report.dir" location="${basedir}/report" />
+	
+	<property name="report.junit.dir" location="${report.dir}/junit" />
+	
+	
+	<target name="code.quality"
+            description="Run all code analysis target and save reports in: ${report.dir} directory"
+            depends="clean, 
+                report.checkstyle, 
+                report.pmd">
+    </target>
+	
+	
+
+	<!-- ############################## CHECKSTYLE INTEGRATION ########################################## -->
+	<property name="checkstyle.home.dir" location="${lib.dir}/checkstyle-5.2-bin/checkstyle-5.2" />
+	<property name="report.checkstyle.dir" location="${report.dir}/checkstyle" />
+
+	<target name="report.checkstyle" 
+        description="Generate a report of code convention violations.">
+		<taskdef resource="checkstyletask.properties" classpath="${checkstyle.home.dir}/checkstyle-5.2-all.jar" />
+		
+		<available file="${checkstyle.home.dir}/checkstyle-5.2-all.jar" property="checkstyle.available" />
+		<fail unless="checkstyle.available" message="Error: CHECKSTYLE_HOME not set or checkstyle-all-5.2.jar not found." />
+
+		<mkdir dir="${report.checkstyle.dir}" />
+
+		<checkstyle config="${checkstyle.home.dir}/sun_checks.xml"
+                    failureProperty="checkstyle.failure"
+                    failOnViolation="false">
+			<formatter type="xml" tofile="${report.checkstyle.dir}/checkstyle_report.xml" />
+			<fileset dir="${src.dir}" includes="**/*.java" />
+		</checkstyle>
+		<style in="${report.checkstyle.dir}/checkstyle_report.xml"
+               out="${report.checkstyle.dir}/checkstyle_report.html"
+               style="${checkstyle.home.dir}/contrib/checkstyle-noframes.xsl" />
+	</target>
+	
+	
+	<!-- ################################# CPD ########################################################### -->
+	<property name="cpd.home.dir" value="${lib.dir}/pmd-bin-5.0.5/pmd-bin-5.0.5" />
+	<property name="report.cpd.dir" location="${report.dir}/cpd" />
+	
+	<path id="cpd.classpath">
+		<pathelement location="${bin.dir}" />
+		<fileset dir="${cpd.home.dir}/lib/">
+			<include name="*.jar" />
+		</fileset>
+	</path>
+	
+	<target name="cpd">
+		<mkdir dir="${report.cpd.dir}" />
+		<taskdef name="cpd" classname="net.sourceforge.pmd.cpd.CPDTask"  classpathref="cpd.classpath" />
+		<cpd minimumTokenCount="10" outputFile="${report.cpd.dir}/cpd.xml" format="xml" >
+			<fileset dir="${src.dir}">
+				<include name="**/*.java"/>
+			</fileset>
+		</cpd>
+	</target>
+	
+	<target name="report.cpd" depends="cpd" description="Generate a report on error analysis.">
+		<xslt in="${report.cpd.dir}/cpd.xml"
+              style="${cpd.home.dir}/etc/xslt/cpdhtml.xslt"
+              out="${report.cpd.dir}/cpd-default.html" />
+	</target>
+
+	<!-- ################################# PMD ########################################################### -->
+	<property name="pmd.home.dir" value="${lib.dir}/pmd-bin-5.0.5/pmd-bin-5.0.5" />
+	<property name="report.pmd.dir" location="${report.dir}/pmd" />
+
+	
+	<path id="pmd2.classpath">
+		<pathelement location="${bin.dir}" />
+		<fileset dir="${pmd.home.dir}/lib/">
+			<include name="*.jar" />
+		</fileset>
+	</path>
+		
+	<target name="report.pmd">
+		<mkdir dir="${report.pmd.dir}" />
+		<taskdef name="pmd" classname="net.sourceforge.pmd.ant.PMDTask"  classpathref="pmd2.classpath" />
+		<echo message="SRC fir: ${src.dir}" />
+		<pmd rulesetfiles="rulesets/java/basic.xml">
+			<formatter type="xml" toFile="${report.pmd.dir}/pmd_report.xml" toConsole="true" />
+			<fileset dir="${src.dir}">
+				<include name="**/*.java" />
+			</fileset>
+		</pmd>
+		<xslt in="${report.pmd.dir}/pmd_report.xml"
+              style="${pmd.home.dir}/etc/xslt/pmd-report-per-class.xslt"
+              out="${report.pmd.dir}/pmd_report.html"
+        />
+	</target>
+
+		<!-- ################################## FindBugs ######################################################### -->
+	<property name="findbugs.home.dir" value="${lib.dir}/findbugs-2.0.3/findbugs-2.0.3" />
+	<property name="report.findbugs.dir" location="${report.dir}/findbugs" />
+
+	<target name="findbugs"  description="Run code analysis over code to check for problems." >
+			
+		<available file="${findbugs.home.dir}/lib/findbugs.jar" property="findbugs.available" />
+		<fail unless="findbugs.available"  message="Error: FINDBUGS_HOME not set or findbugs.jar not found."/>
+		<taskdef name="findbugs"
+                 classname="edu.umd.cs.findbugs.anttask.FindBugsTask"
+                 classpath="${findbugs.home.dir}/lib/findbugs-ant.jar" />
+		
+		<mkdir dir="${bin.dir}" />
+		<javac srcdir="${basedir}/src" destdir="${bin.dir}">
+            <include name="**/*.java"/>
+            <classpath refid="classpath"/>
+        </javac>
+		
+		<mkdir dir="${report.findbugs.dir}" />
+		<findbugs home="${findbugs.home.dir}"
+                  workHard="true"
+                  output="xml:withMessages"
+                  outputFile="${report.findbugs.dir}/findbugs.xml" >
+			<class location="${bin.dir}" />
+			<auxClasspath>
+				<fileset file="${lib.dir}/junit.jar" />
+			</auxClasspath>
+		</findbugs>
+	</target>
+
+	<target name="report.findbugs" depends="findbugs" description="Generate a report on error analysis.">
+		<xslt in="${report.findbugs.dir}/findbugs.xml"
+              style="${findbugs.home.dir}/src/xsl/fancy.xsl"
+              out="${report.findbugs.dir}/findbugs-default.html" />
+	</target>
+	
+	
+	<target name="test.compile"  depends="compile" description="Compilation of tests">
+		<mkdir dir="${bin.dir}" />
+		<javac srcdir="${tests.dir}" destdir="${bin.dir}"  fork="true" debug="true" includeAntRuntime="false" >
+			<classpath>
+				<path id="compile.classpath">
+					<fileset dir="${lib.dir}" includes="**/*.jar" />
+					<pathelement location="${bin.dir}"/>
+				</path>
+				<pathelement path="${java.class.path}" />
+			</classpath>
+		</javac>
+	</target>
+	
+	<target name="test" depends="test.compile">
+		<property name="test.package" value="**"/>
+		
+		<mkdir dir="${report.junit.dir}" />
+		<junit printsummary="on" fork="true" haltonfailure="no">
+			<classpath>
+				<fileset dir="${lib.dir}" includes="**/*.jar" />
+				<pathelement location="${bin.dir}"/>
+			</classpath>
+
+			<formatter type="xml" />
+			<batchtest todir="${report.junit.dir}">
+				<fileset dir="${tests.dir}">
+					<include name="**/${test.package}/*Test*.java" />
+				</fileset>
+			</batchtest>
+		</junit>
+	</target>
+	
+	<target name="report.junit"  
+        description="Create a report for the test result.">
+	
+		<property name="test.package" value="**"/>
+		<antcall target="test">
+			<param name="test.package" value="${test.package}"/>
+		</antcall>
+
+		<junitreport todir="${report.junit.dir}">
+			<fileset dir="${report.junit.dir}">
+				<include name="*.xml" />
+			</fileset>
+			<report format="frames" todir="${report.junit.dir}" />
+		</junitreport>
+	</target>
+
+	<target name="apidoc" description="generate documentation">
+    <javadoc destdir="${doc.dir}" windowtitle="API Documentation" >
+	
+		<sourcepath path="${src.dir}" />
+		<sourcepath path="${tests.dir}" />
+		<classpath refid="classpath"/>
+		<classpath>
+			<path id="compile.classpath">
+				<fileset dir="${lib.dir}" includes="**/*.jar" />
+			</path>
+			
+			<pathelement path="${java.class.path}" />
+		</classpath>
+		
+		<doctitle><![CDATA[<h1>Projekt Kalkulator - Dokumentacja</h1>]]></doctitle>
+		<bottom><![CDATA[<i>Copyright &#169; 2014 Krzysztof Kaluzny Corp. All Rights Reserved.</i>]]></bottom>
+	</javadoc>
+  </target>
+  
+  <target name="verifyHTTP">
+	<CheckRemoteAvailability pageToTest="http://localhost:8090/${app.name}" waitMax="10" checkInterval="10000" />
+  </target>
+	
+    <target name="package" description="Packages the Web Application's web archive file" depends="compile">
+        <echo message="Packaging ${app.name}'s war file ..."/>
+        <delete file="${basedir}/${app.name}.war"/>
+        <jar jarfile="${basedir}/${app.name}.war">
+            <fileset dir="${basedir}/war" includes="**"/>
+        </jar>
+    </target>
+
+    <target name="install" description="Installs the Web Application" depends="package">
+        <echo message="Installing ${app.name} ..."/>
+        <install url="${manager.url}" username="${username}" password="${password}" path="/${app.name}"
+            config="file:${basedir}/war/META-INF/context.xml" war="file:${basedir}/${app.name}.war"/>
+    </target>
+
+    <target name="reload" description="Reloads the Web Application" depends="package">
+        <echo message="Reloading ${app.name} ..."/>
+        <reload url="${manager.url}" username="${username}" password="${password}" path="/${app.name}"/>
+    </target>
+
+    <target name="remove" description="Removes the Web Application">
+        <echo message="Removing ${app.name} ..."/>
+        <remove url="${manager.url}" username="${username}" password="${password}" path="/${app.name}"/>
+    </target>
+
+    <target name="deploy" description="Deploys the Web Application" depends="package">
+        <echo message="Deploying ${app.name} ..."/>
+        <deploy url="${manager.url}" username="${username}" password="${password}" path="/${app.name}"
+            war="file:${basedir}/${app.name}.war"/>
+    </target>
+
+    <target name="undeploy" description="Undeploys the Web Application">
+        <echo message="Undeploying ${app.name} ..."/>
+        <undeploy url="${manager.url}" username="${username}" password="${password}" path="/${app.name}"/>
+    </target>
+
+    <target name="start" description="Start the Web Application">
+        <echo message="Start the Web Application ..."/>
+        <start url="${manager.url}" username="${username}" password="${password}" path="/${app.name}"/>
+    </target>
+
+    <target name="stop" description="Stop the Web Application">
+        <echo message="Stop the Web Application ..."/>
+        <stop url="${manager.url}" username="${username}" password="${password}" path="/${app.name}"/>
+    </target>
+
+    <target name="list" description="Lists Installed and Deployed Web Applications">
+        <echo message="Listing Installed and Deployed Web Applications ..."/>
+        <list url="${manager.url}" username="${username}" password="${password}"/>
+    </target>
+
+    <target name="resources" description="Lists Tomcat Global Resources of All Types">
+        <echo message="Listing Tomcat Global Resources of All Types ..."/>
+        <resources url="${manager.url}" username="${username}" password="${password}"/>
+    </target>
+
+    <target name="roles" description="Lists Tomcat Security Roles">
+        <echo message="Listing Tomcat Security Roles ..."/>
+        <roles url="${manager.url}" username="${username}" password="${password}"/>
+    </target>
+
+	
+	 
+
+	
+	
+	
+    <target name="debug">
+        <echo message="Lists the properties for debugging purposes ..."/>
+        <echo message="app.name    = ${app.name}"/>
+        <echo message="basedir     = ${basedir}"/>
+        <echo message="user.home   = ${user.home}"/>
+        <echo message="tomcat.home = ${tomcat.home}"/>
+        <echo message="manager.url = ${manager.url}"/>
+        <echo message="username    = ${username}"/>
+   <!-- <echo message="password    = ${password}"/> commented out for security reasons -->
+   </target>
+
+</project>
