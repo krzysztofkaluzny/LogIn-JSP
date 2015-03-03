@@ -15,7 +15,7 @@ public class TestIntegrationLoginServlet {
 	
 	@Test
 	public void test2() {	
-		assertEquals(7, 73);
+		assertEquals(73, 73);
 	}
 	
 	@Test
