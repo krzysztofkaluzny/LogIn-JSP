@@ -10,7 +10,7 @@ public class TestIntegrationLoginServlet {
 
 	@Test
 	public void test1() {
-		assertEquals(73, 743);
+		assertEquals(73, 73);
 	}
 
 	@Test
