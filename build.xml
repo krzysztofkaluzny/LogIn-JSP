@@ -3,7 +3,7 @@
     <property file="${user.home}/build.properties"/>
     <property file="build.properties"/>
     <property name="app.name" value="LogIn_deployed_with_plugin"/>
-	
+
 	<import file="common.xml" />
 
     <path id="classpath">
@@ -11,14 +11,14 @@
             <include name="*.jar"/>
         </fileset>
     </path>
-	
+
 	<path id="catalina-ant-classpath">
 		<fileset dir="./lib">
             <include name="*.jar"/>
         </fileset>
     </path>
-	
-	
+
+
 	<taskdef name="deploy"    classname="org.apache.catalina.ant.DeployTask">
 		<classpath refid="catalina-ant-classpath"/>
 	</taskdef>
@@ -53,7 +53,7 @@
 		</zip>
 	</target>
 
-	<target name="unzip" description="Unzip the entire project zip to ." > 
+	<target name="unzip" description="Unzip the entire project zip to ." >
 		<property name="sourceFile" value="${dist.dir}/workspace.zip"/>
 		<property name="targetDir" value="."/>
 		<unzip src="${sourceFile}" dest="${targetDir}"/>
@@ -92,7 +92,7 @@
                 <include name="web.xml"/>
             </fileset>
         </copy>
-		<copy todir="${basedir}/war">
+		    <copy todir="${basedir}/war">
             <fileset dir="${basedir}/web/WEB-INF">
                 <include name="globalCSS.css"/>
             </fileset>
@@ -115,8 +115,8 @@
             </fileset>
         </copy>
     </target>
-	
-	
+
+
 	<property name="src.dir"    location="${basedir}/src" />
 	<property name="doc.dir"    location="${basedir}/doc" />
 	<property name="tests.dir"    location="${basedir}/tests" />
@@ -124,27 +124,27 @@
 	<property name="temp.dir"    location="${basedir}/temp" />
 	<property name="lib.dir"    location="${basedir}/lib" />
 	<property name="report.dir" location="${basedir}/report" />
-	
+
 	<property name="report.junit.dir" location="${report.dir}/junit" />
-	
-	
+
+
 	<target name="code.quality"
             description="Run all code analysis target and save reports in: ${report.dir} directory"
-            depends="clean, 
-                report.checkstyle, 
+            depends="clean,
+                report.checkstyle,
                 report.pmd">
     </target>
-	
-	
+
+
 
 	<!-- ############################## CHECKSTYLE INTEGRATION ########################################## -->
 	<property name="checkstyle.home.dir" location="${lib.dir}/checkstyle-5.2-bin/checkstyle-5.2" />
 	<property name="report.checkstyle.dir" location="${report.dir}/checkstyle" />
 
-	<target name="report.checkstyle" 
+	<target name="report.checkstyle"
         description="Generate a report of code convention violations.">
 		<taskdef resource="checkstyletask.properties" classpath="${checkstyle.home.dir}/checkstyle-5.2-all.jar" />
-		
+
 		<available file="${checkstyle.home.dir}/checkstyle-5.2-all.jar" property="checkstyle.available" />
 		<fail unless="checkstyle.available" message="Error: CHECKSTYLE_HOME not set or checkstyle-all-5.2.jar not found." />
 
@@ -160,19 +160,19 @@
                out="${report.checkstyle.dir}/checkstyle_report.html"
                style="${checkstyle.home.dir}/contrib/checkstyle-noframes.xsl" />
 	</target>
-	
-	
+
+
 	<!-- ################################# CPD ########################################################### -->
 	<property name="cpd.home.dir" value="${lib.dir}/pmd-bin-5.0.5/pmd-bin-5.0.5" />
 	<property name="report.cpd.dir" location="${report.dir}/cpd" />
-	
+
 	<path id="cpd.classpath">
 		<pathelement location="${bin.dir}" />
 		<fileset dir="${cpd.home.dir}/lib/">
 			<include name="*.jar" />
 		</fileset>
 	</path>
-	
+
 	<target name="cpd">
 		<mkdir dir="${report.cpd.dir}" />
 		<taskdef name="cpd" classname="net.sourceforge.pmd.cpd.CPDTask"  classpathref="cpd.classpath" />
@@ -182,7 +182,7 @@
 			</fileset>
 		</cpd>
 	</target>
-	
+
 	<target name="report.cpd" depends="cpd" description="Generate a report on error analysis.">
 		<xslt in="${report.cpd.dir}/cpd.xml"
               style="${cpd.home.dir}/etc/xslt/cpdhtml.xslt"
@@ -193,14 +193,14 @@
 	<property name="pmd.home.dir" value="${lib.dir}/pmd-bin-5.0.5/pmd-bin-5.0.5" />
 	<property name="report.pmd.dir" location="${report.dir}/pmd" />
 
-	
+
 	<path id="pmd2.classpath">
 		<pathelement location="${bin.dir}" />
 		<fileset dir="${pmd.home.dir}/lib/">
 			<include name="*.jar" />
 		</fileset>
 	</path>
-		
+
 	<target name="report.pmd">
 		<mkdir dir="${report.pmd.dir}" />
 		<taskdef name="pmd" classname="net.sourceforge.pmd.ant.PMDTask"  classpathref="pmd2.classpath" />
@@ -222,19 +222,19 @@
 	<property name="report.findbugs.dir" location="${report.dir}/findbugs" />
 
 	<target name="findbugs"  description="Run code analysis over code to check for problems." >
-			
+
 		<available file="${findbugs.home.dir}/lib/findbugs.jar" property="findbugs.available" />
 		<fail unless="findbugs.available"  message="Error: FINDBUGS_HOME not set or findbugs.jar not found."/>
 		<taskdef name="findbugs"
                  classname="edu.umd.cs.findbugs.anttask.FindBugsTask"
                  classpath="${findbugs.home.dir}/lib/findbugs-ant.jar" />
-		
+
 		<mkdir dir="${bin.dir}" />
 		<javac srcdir="${basedir}/src" destdir="${bin.dir}">
             <include name="**/*.java"/>
             <classpath refid="classpath"/>
         </javac>
-		
+
 		<mkdir dir="${report.findbugs.dir}" />
 		<findbugs home="${findbugs.home.dir}"
                   workHard="true"
@@ -252,8 +252,8 @@
               style="${findbugs.home.dir}/src/xsl/fancy.xsl"
               out="${report.findbugs.dir}/findbugs-default.html" />
 	</target>
-	
-	
+
+
 	<target name="test.compile"  depends="compile" description="Compilation of tests">
 		<mkdir dir="${bin.dir}" />
 		<javac srcdir="${tests.dir}" destdir="${bin.dir}"  fork="true" debug="true" includeAntRuntime="false" >
@@ -266,10 +266,10 @@
 			</classpath>
 		</javac>
 	</target>
-	
+
 	<target name="test" depends="test.compile">
 		<property name="test.package" value="**"/>
-		
+
 		<mkdir dir="${report.junit.dir}" />
 		<junit printsummary="on" fork="true" haltonfailure="no">
 			<classpath>
@@ -285,10 +285,10 @@
 			</batchtest>
 		</junit>
 	</target>
-	
-	<target name="report.junit"  
+
+	<target name="report.junit"
         description="Create a report for the test result.">
-	
+
 		<property name="test.package" value="**"/>
 		<antcall target="test">
 			<param name="test.package" value="${test.package}"/>
@@ -304,7 +304,7 @@
 
 	<target name="apidoc" description="generate documentation">
     <javadoc destdir="${doc.dir}" windowtitle="API Documentation" >
-	
+
 		<sourcepath path="${src.dir}" />
 		<sourcepath path="${tests.dir}" />
 		<classpath refid="classpath"/>
@@ -312,19 +312,19 @@
 			<path id="compile.classpath">
 				<fileset dir="${lib.dir}" includes="**/*.jar" />
 			</path>
-			
+
 			<pathelement path="${java.class.path}" />
 		</classpath>
-		
+
 		<doctitle><![CDATA[<h1>Projekt Kalkulator - Dokumentacja</h1>]]></doctitle>
 		<bottom><![CDATA[<i>Copyright &#169; 2014 Krzysztof Kaluzny Corp. All Rights Reserved.</i>]]></bottom>
 	</javadoc>
   </target>
-  
+
   <target name="verifyHTTP">
 	<CheckRemoteAvailability pageToTest="http://localhost:8090/${app.name}" waitMax="10" checkInterval="10000" />
   </target>
-	
+
     <target name="package" description="Packages the Web Application's web archive file" depends="compile">
         <echo message="Packaging ${app.name}'s war file ..."/>
         <delete file="${basedir}/${app.name}.war"/>
@@ -385,12 +385,12 @@
         <roles url="${manager.url}" username="${username}" password="${password}"/>
     </target>
 
-	
-	 
 
-	
-	
-	
+
+
+
+
+
     <target name="debug">
         <echo message="Lists the properties for debugging purposes ..."/>
         <echo message="app.name    = ${app.name}"/>
