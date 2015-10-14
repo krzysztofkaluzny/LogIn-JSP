@@ -1,3 +1,3 @@
 # LogIn-JSP 2.o
 
-Komentarz
+Komenatrz - EU CoodeWeek 2015
